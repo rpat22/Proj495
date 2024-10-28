@@ -1,0 +1,173 @@
+using System;
+using System.Collections.Generic;
+
+public class Patient
+{
+    public string Name { get; set; }
+    public int PatientID { get; set; }
+    public string Email { get; set; }
+    public string PhoneNumber { get; set; }
+    public DateTime DateOfBirth { get; set; }
+    public List<Appointment> AppointmentList { get; set; }
+    private List<string> PaymentMethods { get; set; }
+    public MedicalRecord MedicalRecord { get; set; }
+}
+
+public class Therapist
+{
+    public int TherapistID { get; set; }
+    public string Name { get; set; }
+    public string Specialty { get; set; }
+    public List<Appointment> AppointmentList { get; set; }
+    public bool PaymentConfirmed { get; set; }
+}
+
+public class Appointment
+{
+    public int AppointmentID { get; set; }
+    public DateTime Date { get; set; }
+    public string Status { get; set; }
+}
+
+public class Homework
+{
+    public int HomeworkID { get; set; }
+    public int ClientID { get; set; }
+    public int TherapistID { get; set; }
+    public DateTime DueDate { get; set; }
+    public string SubmissionStatus { get; set; }
+}
+
+public class Resource
+{
+    public int ResourceID { get; set; }
+    public int TherapistID { get; set; }
+    public int ClientID { get; set; }
+    public string ResourceType { get; set; }
+    public DateTime DateGiven { get; set; }
+}
+
+public class Feedback
+{
+    public int FeedbackID { get; set; }
+    public int HomeworkID { get; set; }
+    public int TherapistID { get; set; }
+    public int ClientID { get; set; }
+    public DateTime DateGiven { get; set; }
+}
+
+public class RegistrationForm
+{
+    public int FormID { get; set; }
+}
+
+public class Receptionist
+{
+    public int ReceptionistID { get; set; }
+    public string Name { get; set; }
+    public bool PaymentVerified { get; set; }
+}
+
+public class PaymentGateway
+{
+    public int MethodType { get; set; }
+    public string AccountNumber { get; set; }
+    public string CardHolderName { get; set; }
+    public DateTime ExpirationDate { get; set; }
+}
+
+public class Payment
+{
+    public int PaymentID { get; set; }
+    public DateTime PaymentDate { get; set; }
+    public decimal Amount { get; set; }
+    public string Status { get; set; }
+}
+
+public class Manager
+{
+    private int ManagerID { get; set; }
+    private string Name { get; set; }
+    private string Email { get; set; }
+    private string PhoneNumber { get; set; }
+}
+
+public class SystemClass
+{
+    public int SystemID { get; set; }
+    public Database Database { get; set; }
+    public int AvailableSlots { get; set; }
+}
+
+public class Receipt
+{
+    private int ReceiptID { get; set; }
+    private int PaymentID { get; set; }
+    private int ClientID { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime Date { get; set; }
+}
+
+public class PerformanceReport
+{
+    public int ReportID { get; set; }
+    public DateTime Date { get; set; }
+    public string Metrics { get; set; }
+}
+
+public class Notification 
+{
+    private int NotificationID { get; set; }
+    private string Content { get; set; } 
+    public string Recipient { get; set; }
+    public string Type { get; set; }
+    public string Message { get; set; }
+}
+
+public class StaffSchedule
+{
+    public int ScheduleID { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public string AvailableSlots { get; set; }
+}
+
+public class Document
+{
+    public int DocumentID { get; set; } 
+    public string FileType { get; set; } 
+    public DateTime UploadDate { get; set; }
+}
+
+public class MedicalRecord
+{
+    public int PatientID { get; set; }
+    public string Report { get; set; }
+    public List<DateTime> TreatmentHistory { get; set; }
+}
+
+public class Assessment
+{
+    private int ClientID { get; set; }
+    private string Description { get; set; }
+    private string Status { get; set; }
+    private string Result { get; set; }
+}
+
+public class ConfirmationEmail
+{
+    public int EmailID { get; set; }
+    public string RecipientEmail { get; set; }
+    public string Message { get; set; }
+}
+
+public class Account
+{
+    private int AccountID { get; set; }
+    private string Email { get; set; } 
+    private string Password { get; set; }
+}
+
+public class Authentication
+{
+}
