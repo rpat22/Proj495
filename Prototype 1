@@ -76,6 +76,20 @@ public class PaymentGateway
     public string AccountNumber { get; set; }
     public string CardHolderName { get; set; }
     public DateTime ExpirationDate { get; set; }
+
+    // Method to process a payment transaction
+    public bool ProcessTransaction(decimal amount)
+    {
+        // Logic to interact with payment provider, simplified here
+        Console.WriteLine($"Processing transaction of {amount:C} for cardholder {CardHolderName}");
+        return true; // Assuming transaction succeeds
+    }
+
+    public bool ValidatePayment()
+    {
+        // Logic to validate payment details, such as expiration date
+        return DateTime.Now < ExpirationDate;
+    }
 }
 
 public class Payment
@@ -84,6 +98,30 @@ public class Payment
     public DateTime PaymentDate { get; set; }
     public decimal Amount { get; set; }
     public string Status { get; set; }
+    // Method to initiate payment
+    public void InitiatePayment(PaymentGateway paymentGateway, decimal amount)
+    {
+        if (paymentGateway.ValidatePayment())
+        {
+            bool success = paymentGateway.ProcessTransaction(amount);
+            if (success)
+            {
+                Status = "Success";
+                PaymentDate = DateTime.Now;
+                Console.WriteLine("Payment succeeded.");
+                Receipt.GenerateReceipt(PaymentID, amount);
+            }
+            else
+            {
+                Status = "Failed";
+                Console.WriteLine("Payment failed. Please try again.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Payment validation failed. Please check your payment details.");
+        }
+    }
 }
 
 public class Manager
@@ -130,6 +168,12 @@ public class Receipt
     private int ClientID { get; set; }
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
+
+    // Method to generate a receipt after payment
+    public static void GenerateReceipt(int paymentID, decimal amount)
+    {
+        Console.WriteLine($"Receipt generated for Payment ID: {paymentID}, Amount: {amount:C}");
+    }
 }
 
 public class PerformanceReport
