@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
-
+using MySql.Data.MySqlClient;
+namespace PhysioDynamik_Prototype_1
+{
 public class Patient
 {
     public string Name { get; set; }
@@ -90,13 +92,35 @@ public class Manager
     private string Name { get; set; }
     private string Email { get; set; }
     private string PhoneNumber { get; set; }
+
+    // Method for manager to review the monthly performance report
+    public void ReviewMonthlyPerformanceReport(DateTime reportDate)
+    {
+        PerformanceReport report = PerformanceReport.GetMonthlyPerformanceReport(reportDate);
+        if (report != null)
+        {
+            report.DisplayReport();
+            Notification.SendNotification("Manager", $"Performance report for {reportDate.ToString("MMMM yyyy")} has been reviewed.", "Info");
+
+        }
+        else
+        {
+            Console.WriteLine("No performance report found for the selected month.");
+        }
+    }
 }
 
 public class SystemClass
 {
     public int SystemID { get; set; }
-    public Database Database { get; set; }
+    public DatabaseHelper DatabaseHelper { get; set; }
     public int AvailableSlots { get; set; }
+
+    // Constructor to initialize DatabaseHelper
+    public SystemClass()
+    {
+        DatabaseHelper = new DatabaseHelper();
+    }
 }
 
 public class Receipt
@@ -113,6 +137,53 @@ public class PerformanceReport
     public int ReportID { get; set; }
     public DateTime Date { get; set; }
     public string Metrics { get; set; }
+    // Method to fetch monthly performance report from MySQL database
+    public static PerformanceReport GetMonthlyPerformanceReport(DateTime reportDate)
+    {
+        PerformanceReport report = null;
+        DatabaseHelper dbHelper = new DatabaseHelper();
+
+        using (var connection = dbHelper.GetConnection())
+        {
+            try
+            {
+                connection.Open();
+                string query = "SELECT * FROM PerformanceReport WHERE MONTH(Date) = @Month AND YEAR(Date) = @Year";
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Month", reportDate.Month);
+                    cmd.Parameters.AddWithValue("@Year", reportDate.Year);
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            report = new PerformanceReport
+                            {
+                                ReportID = reader.GetInt32("ReportID"),
+                                Date = reader.GetDateTime("Date"),
+                                Metrics = reader.GetString("Metrics")
+                            };
+                        }
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine($"Database error: {ex.Message}");
+            }
+        }
+
+        return report;
+    }
+
+    // Method to display the performance report
+    public void DisplayReport()
+    {
+        Console.WriteLine("Performance Report:");
+        Console.WriteLine($"Report ID: {ReportID}");
+        Console.WriteLine($"Date: {Date.ToShortDateString()}");
+        Console.WriteLine($"Metrics: {Metrics}");
+    }
 }
 
 public class Notification 
@@ -122,6 +193,35 @@ public class Notification
     public string Recipient { get; set; }
     public string Type { get; set; }
     public string Message { get; set; }
+
+    // Method to send notification
+    public static void SendNotification(string recipient, string message, string type)
+    {
+        DatabaseHelper dbHelper = new DatabaseHelper();
+
+        using (var connection = dbHelper.GetConnection())
+        {
+            try
+            {
+                connection.Open();
+                string query = "INSERT INTO Notification (Recipient, Message, Type, Content) VALUES (@Recipient, @Message, @Type, @Content)";
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Recipient", recipient);
+                    cmd.Parameters.AddWithValue("@Message", message);
+                    cmd.Parameters.AddWithValue("@Type", type);
+                    cmd.Parameters.AddWithValue("@Content", message);  // In this case, Content and Message are the same
+                    cmd.ExecuteNonQuery();
+                }
+
+                Console.WriteLine($"Notification sent to {recipient}: {message}");
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine($"Database error: {ex.Message}");
+            }
+        }
+    }
 }
 
 public class StaffSchedule
@@ -167,7 +267,4 @@ public class Account
     private string Email { get; set; } 
     private string Password { get; set; }
 }
-
-public class Authentication
-{
 }
