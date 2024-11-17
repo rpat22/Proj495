@@ -1,314 +1,207 @@
 using System;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
+
 namespace PhysioDynamik_Prototype_1
 {
-public class Patient
-{
-    public string Name { get; set; }
-    public int PatientID { get; set; }
-    public string Email { get; set; }
-    public string PhoneNumber { get; set; }
-    public DateTime DateOfBirth { get; set; }
-    public List<Appointment> AppointmentList { get; set; }
-    private List<string> PaymentMethods { get; set; }
-    public MedicalRecord MedicalRecord { get; set; }
-}
-
-public class Therapist
-{
-    public int TherapistID { get; set; }
-    public string Name { get; set; }
-    public string Specialty { get; set; }
-    public List<Appointment> AppointmentList { get; set; }
-    public bool PaymentConfirmed { get; set; }
-}
-
-public class Appointment
-{
-    public int AppointmentID { get; set; }
-    public DateTime Date { get; set; }
-    public string Status { get; set; }
-}
-
-public class Homework
-{
-    public int HomeworkID { get; set; }
-    public int ClientID { get; set; }
-    public int TherapistID { get; set; }
-    public DateTime DueDate { get; set; }
-    public string SubmissionStatus { get; set; }
-}
-
-public class Resource
-{
-    public int ResourceID { get; set; }
-    public int TherapistID { get; set; }
-    public int ClientID { get; set; }
-    public string ResourceType { get; set; }
-    public DateTime DateGiven { get; set; }
-}
-
-public class Feedback
-{
-    public int FeedbackID { get; set; }
-    public int HomeworkID { get; set; }
-    public int TherapistID { get; set; }
-    public int ClientID { get; set; }
-    public DateTime DateGiven { get; set; }
-}
-
-public class RegistrationForm
-{
-    public int FormID { get; set; }
-}
-
-public class Receptionist
-{
-    public int ReceptionistID { get; set; }
-    public string Name { get; set; }
-    public bool PaymentVerified { get; set; }
-}
-
-public class PaymentGateway
-{
-    public int MethodType { get; set; }
-    public string AccountNumber { get; set; }
-    public string CardHolderName { get; set; }
-    public DateTime ExpirationDate { get; set; }
-
-    // Method to process a payment transaction
-    public bool ProcessTransaction(decimal amount)
+    public class Patient
     {
-        // Logic to interact with payment provider, simplified here
-        Console.WriteLine($"Processing transaction of {amount:C} for cardholder {CardHolderName}");
-        return true; // Assuming transaction succeeds
-    }
+        public string Name { get; set; }
+        public int PatientID { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public List<Appointment> AppointmentList { get; set; } = new List<Appointment>();
+        private List<string> PaymentMethods { get; set; }
+        public MedicalRecord MedicalRecord { get; set; }
 
-    public bool ValidatePayment()
-    {
-        // Logic to validate payment details, such as expiration date
-        return DateTime.Now < ExpirationDate;
-    }
-}
-
-public class Payment
-{
-    public int PaymentID { get; set; }
-    public DateTime PaymentDate { get; set; }
-    public decimal Amount { get; set; }
-    public string Status { get; set; }
-    // Method to initiate payment
-    public void InitiatePayment(PaymentGateway paymentGateway, decimal amount)
-    {
-        if (paymentGateway.ValidatePayment())
+        // Method for selecting an appointment
+        public void SelectAppointment(SystemClass system, string slot, int therapistID)
         {
-            bool success = paymentGateway.ProcessTransaction(amount);
-            if (success)
+            if (system.CheckSlotAvailability(slot))
             {
-                Status = "Success";
-                PaymentDate = DateTime.Now;
-                Console.WriteLine("Payment succeeded.");
-                Receipt.GenerateReceipt(PaymentID, amount);
+                var appointment = new Appointment
+                {
+                    AppointmentID = new Random().Next(1000, 9999),
+                    Date = DateTime.Now,
+                    Status = "Scheduled"
+                };
+                system.AddAppointment(appointment, slot);
+                AppointmentList.Add(appointment);
             }
             else
             {
-                Status = "Failed";
-                Console.WriteLine("Payment failed. Please try again.");
+                Console.WriteLine("Selected slot is not available.");
             }
         }
-        else
+    }
+
+    public class Therapist
+    {
+        public int TherapistID { get; set; }
+        public string Name { get; set; }
+        public string Specialty { get; set; }
+        public List<Appointment> AppointmentList { get; set; }
+        public bool PaymentConfirmed { get; set; }
+    }
+
+    public class Appointment
+    {
+        public int AppointmentID { get; set; }
+        public DateTime Date { get; set; }
+        public string Status { get; set; }
+
+        // Schedule an appointment
+        public void ScheduleAppointment(DateTime date)
         {
-            Console.WriteLine("Payment validation failed. Please check your payment details.");
+            Date = date;
+            Status = "Scheduled";
+            Console.WriteLine($"Appointment {AppointmentID} scheduled for {Date}.");
+        }
+
+        // Cancel an appointment
+        public void CancelAppointment()
+        {
+            Status = "Cancelled";
+            Console.WriteLine($"Appointment {AppointmentID} has been cancelled.");
+        }
+
+        // View appointment status
+        public void ViewStatus()
+        {
+            Console.WriteLine($"Appointment {AppointmentID} status: {Status}");
         }
     }
-}
 
-public class Manager
-{
-    private int ManagerID { get; set; }
-    private string Name { get; set; }
-    private string Email { get; set; }
-    private string PhoneNumber { get; set; }
-
-    // Method for manager to review the monthly performance report
-    public void ReviewMonthlyPerformanceReport(DateTime reportDate)
+    public class SystemClass
     {
-        PerformanceReport report = PerformanceReport.GetMonthlyPerformanceReport(reportDate);
-        if (report != null)
+        public int SystemID { get; set; }
+        public DatabaseHelper DatabaseHelper { get; set; }
+        public List<string> AvailableSlots { get; set; } = new List<string>
         {
-            report.DisplayReport();
-            Notification.SendNotification("Manager", $"Performance report for {reportDate.ToString("MMMM yyyy")} has been reviewed.", "Info");
+            "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM"
+        };
 
+        public List<Appointment> Appointments { get; set; } = new List<Appointment>();
+
+        // Constructor to initialize DatabaseHelper
+        public SystemClass()
+        {
+            DatabaseHelper = new DatabaseHelper();
         }
-        else
+
+        // Display available slots
+        public void DisplayAvailableSlots()
         {
-            Console.WriteLine("No performance report found for the selected month.");
-        }
-    }
-}
-
-public class SystemClass
-{
-    public int SystemID { get; set; }
-    public DatabaseHelper DatabaseHelper { get; set; }
-    public int AvailableSlots { get; set; }
-
-    // Constructor to initialize DatabaseHelper
-    public SystemClass()
-    {
-        DatabaseHelper = new DatabaseHelper();
-    }
-}
-
-public class Receipt
-{
-    private int ReceiptID { get; set; }
-    private int PaymentID { get; set; }
-    private int ClientID { get; set; }
-    public decimal Amount { get; set; }
-    public DateTime Date { get; set; }
-
-    // Method to generate a receipt after payment
-    public static void GenerateReceipt(int paymentID, decimal amount)
-    {
-        Console.WriteLine($"Receipt generated for Payment ID: {paymentID}, Amount: {amount:C}");
-    }
-}
-
-public class PerformanceReport
-{
-    public int ReportID { get; set; }
-    public DateTime Date { get; set; }
-    public string Metrics { get; set; }
-    // Method to fetch monthly performance report from MySQL database
-    public static PerformanceReport GetMonthlyPerformanceReport(DateTime reportDate)
-    {
-        PerformanceReport report = null;
-        DatabaseHelper dbHelper = new DatabaseHelper();
-
-        using (var connection = dbHelper.GetConnection())
-        {
-            try
+            Console.WriteLine("Available Slots:");
+            foreach (var slot in AvailableSlots)
             {
-                connection.Open();
-                string query = "SELECT * FROM PerformanceReport WHERE MONTH(Date) = @Month AND YEAR(Date) = @Year";
-                using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                {
-                    cmd.Parameters.AddWithValue("@Month", reportDate.Month);
-                    cmd.Parameters.AddWithValue("@Year", reportDate.Year);
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            report = new PerformanceReport
-                            {
-                                ReportID = reader.GetInt32("ReportID"),
-                                Date = reader.GetDateTime("Date"),
-                                Metrics = reader.GetString("Metrics")
-                            };
-                        }
-                    }
-                }
-            }
-            catch (MySqlException ex)
-            {
-                Console.WriteLine($"Database error: {ex.Message}");
+                Console.WriteLine(slot);
             }
         }
 
-        return report;
-    }
-
-    // Method to display the performance report
-    public void DisplayReport()
-    {
-        Console.WriteLine("Performance Report:");
-        Console.WriteLine($"Report ID: {ReportID}");
-        Console.WriteLine($"Date: {Date.ToShortDateString()}");
-        Console.WriteLine($"Metrics: {Metrics}");
-    }
-}
-
-public class Notification 
-{
-    private int NotificationID { get; set; }
-    private string Content { get; set; } 
-    public string Recipient { get; set; }
-    public string Type { get; set; }
-    public string Message { get; set; }
-
-    // Method to send notification
-    public static void SendNotification(string recipient, string message, string type)
-    {
-        DatabaseHelper dbHelper = new DatabaseHelper();
-
-        using (var connection = dbHelper.GetConnection())
+        // Check if a slot is available
+        public bool CheckSlotAvailability(string slot)
         {
-            try
-            {
-                connection.Open();
-                string query = "INSERT INTO Notification (Recipient, Message, Type, Content) VALUES (@Recipient, @Message, @Type, @Content)";
-                using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                {
-                    cmd.Parameters.AddWithValue("@Recipient", recipient);
-                    cmd.Parameters.AddWithValue("@Message", message);
-                    cmd.Parameters.AddWithValue("@Type", type);
-                    cmd.Parameters.AddWithValue("@Content", message);  // In this case, Content and Message are the same
-                    cmd.ExecuteNonQuery();
-                }
+            return AvailableSlots.Contains(slot);
+        }
 
-                Console.WriteLine($"Notification sent to {recipient}: {message}");
-            }
-            catch (MySqlException ex)
+        // Add a new appointment
+        public void AddAppointment(Appointment appointment, string slot)
+        {
+            if (CheckSlotAvailability(slot))
             {
-                Console.WriteLine($"Database error: {ex.Message}");
+                Appointments.Add(appointment);
+                AvailableSlots.Remove(slot);
+                Console.WriteLine($"Appointment {appointment.AppointmentID} added for slot {slot}.");
+            }
+            else
+            {
+                Console.WriteLine("Selected slot is not available.");
+            }
+        }
+
+        // Retrieve all appointments
+        public void GetAppointments()
+        {
+            Console.WriteLine("Appointments List:");
+            foreach (var appointment in Appointments)
+            {
+                Console.WriteLine($"ID: {appointment.AppointmentID}, Date: {appointment.Date}, Status: {appointment.Status}");
             }
         }
     }
-}
 
-public class StaffSchedule
-{
-    public int ScheduleID { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public string AvailableSlots { get; set; }
-}
+    public class Homework
+    {
+        public int HomeworkID { get; set; }
+        public int ClientID { get; set; }
+        public int TherapistID { get; set; }
+        public DateTime DueDate { get; set; }
+        public string SubmissionStatus { get; set; }
+    }
 
-public class Document
-{
-    public int DocumentID { get; set; } 
-    public string FileType { get; set; } 
-    public DateTime UploadDate { get; set; }
-}
+    public class Resource
+    {
+        public int ResourceID { get; set; }
+        public int TherapistID { get; set; }
+        public int ClientID { get; set; }
+        public string ResourceType { get; set; }
+        public DateTime DateGiven { get; set; }
+    }
 
-public class MedicalRecord
-{
-    public int PatientID { get; set; }
-    public string Report { get; set; }
-    public List<DateTime> TreatmentHistory { get; set; }
-}
+    public class Feedback
+    {
+        public int FeedbackID { get; set; }
+        public int HomeworkID { get; set; }
+        public int TherapistID { get; set; }
+        public int ClientID { get; set; }
+        public DateTime DateGiven { get; set; }
+    }
 
-public class Assessment
-{
-    private int ClientID { get; set; }
-    private string Description { get; set; }
-    private string Status { get; set; }
-    private string Result { get; set; }
-}
+    public class RegistrationForm
+    {
+        public int FormID { get; set; }
+    }
 
-public class ConfirmationEmail
-{
-    public int EmailID { get; set; }
-    public string RecipientEmail { get; set; }
-    public string Message { get; set; }
-}
+    public class Receptionist
+    {
+        public int ReceptionistID { get; set; }
+        public string Name { get; set; }
+        public bool PaymentVerified { get; set; }
+    }
 
-public class Account
-{
-    private int AccountID { get; set; }
-    private string Email { get; set; } 
-    private string Password { get; set; }
-}
+    public class PaymentGateway
+    {
+        public int MethodType { get; set; }
+        public string AccountNumber { get; set; }
+        public string CardHolderName { get; set; }
+        public DateTime ExpirationDate { get; set; }
+
+        public bool ProcessTransaction(decimal amount)
+        {
+            Console.WriteLine($"Processing transaction of {amount:C} for cardholder {CardHolderName}");
+            return true;
+        }
+
+        public bool ValidatePayment()
+        {
+            return DateTime.Now < ExpirationDate;
+        }
+    }
+
+    public class MedicalRecord
+    {
+        public int PatientID { get; set; }
+        public string Report { get; set; }
+        public List<DateTime> TreatmentHistory { get; set; }
+    }
+
+    public class Assessment
+    {
+        private int ClientID { get; set; }
+        private string Description { get; set; }
+        private string Status { get; set; }
+        private string Result { get; set; }
+    }
 }
