@@ -38,6 +38,60 @@ namespace PhysioDynamik_Prototype_1
 
     public class Therapist
     {
+// Mocked storage for therapist availabilities
+    private static Dictionary<int, List<AvailabilitySlot>> therapistAvailabilities = new Dictionary<int, List<AvailabilitySlot>>();
+
+    /// <summary>
+    /// Uploads availability slots for a therapist.
+    /// </summary>
+    /// <param name="therapistID">Unique identifier for the therapist.</param>
+    /// <param name="availabilities">List of availability slots to upload.</param>
+    /// <returns>Status confirmation string.</returns>
+    public string UploadTherapistAvailabilities(int therapistID, List<AvailabilitySlot> availabilities)
+    {
+        try
+        {
+            // Pre-conditions: Validate inputs
+            if (therapistID <= 0)
+                return "Failure: Invalid therapist ID.";
+            
+            if (availabilities == null || availabilities.Count == 0)
+                return "Failure: No availabilities provided.";
+
+            foreach (var slot in availabilities)
+            {
+                if (slot.StartTime >= slot.EndTime)
+                    return $"Failure: Invalid time range for slot starting at {slot.StartTime}.";
+            }
+
+            // Check for overlaps (mock logic for simplicity)
+            if (therapistAvailabilities.ContainsKey(therapistID))
+            {
+                var existingSlots = therapistAvailabilities[therapistID];
+                foreach (var newSlot in availabilities)
+                {
+                    foreach (var existingSlot in existingSlots)
+                    {
+                        if (newSlot.ConflictsWith(existingSlot))
+                            return $"Failure: Overlapping availability slot detected.";
+                    }
+                }
+            }
+            else
+            {
+                therapistAvailabilities[therapistID] = new List<AvailabilitySlot>();
+            }
+
+            // Post-conditions: Add new availabilities
+            therapistAvailabilities[therapistID].AddRange(availabilities);
+
+            return "Success";
+        }
+        catch (Exception ex)
+        {
+            return $"Failure: {ex.Message}";
+        }
+    }
         public int TherapistID { get; set; }
         public string Name { get; set; }
         public string Specialty { get; set; }
@@ -204,4 +258,20 @@ namespace PhysioDynamik_Prototype_1
         private string Status { get; set; }
         private string Result { get; set; }
     }
+
+    public class AvailabilitySlot
+{
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public string DayOfWeek { get; set; }
+    public bool IsRecurring { get; set; }
+
+   
+    public bool ConflictsWith(AvailabilitySlot other)
+    {
+        return this.DayOfWeek == other.DayOfWeek &&
+               ((this.StartTime < other.EndTime && this.EndTime > other.StartTime) ||
+                (this.StartTime == other.StartTime && this.EndTime == other.EndTime));
+    }
+}
 }
